@@ -61,7 +61,7 @@ def plot_data_per_id(df_per_id,plot_kind):
     '''
     for i in range(len(df_per_id)):
         df_per_id[i].plot(kind=plot_kind,x='Hours_From_First_Sample',y='Weight',color='red',
-                yticks=np.arange(0, 6, 0.2),ylim = (0,6))
+                yticks=np.arange(0, 6, 0.2),ylim = (0,6), title="Plot For Subject No: " + str(df_per_id[i]['ID'].real[0]))
         directory = "C:\\Users\\omrish\\Desktop\\School\\ProejctWithOfra\\ProjectSourceCode\\Plots\\"
         plt.savefig(directory+'plt-result-' + str(df_per_id[i]['ID'].real[0]) + '.png')
         plt.clf()
