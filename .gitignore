@@ -1,3 +1,5 @@
 .idea/**
 DataSet/*
 venv/**
+Plots/**
+GrowthCurves/GrowthCurves.log
