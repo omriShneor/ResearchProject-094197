@@ -12,7 +12,7 @@ def extract_clean_wieght_data():
     cleaning the data and returning the cleaned data.
     :return pandas.DataFrame df: the cleaned data after removing NULL values from the Weight column
     '''
-    df = get_dataset("CleanedWeightData.xlsx")
+    df = get_dataset("WeightData.xlsx")
     initial_rows = len(df.index)
     logging.info("Initial number of Rows: " + str(initial_rows))
     df = df.dropna(subset=["Weight"])
