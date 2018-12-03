@@ -62,7 +62,7 @@ def plot_data_per_id(df_per_id,expected_weight_df):
     '''
     for i in range(len(df_per_id)):
         idx = filter_suitable_expected_weight(df_per_id[i], weight_at_birth_series, expected_weight_df)
-        suitable_df = expected_weight_df.iloc[:,[0,idx-1]]
+        suitable_df = expected_weight_df.iloc[:,[0,idx]]
         suitable_df.iloc[:,0] = suitable_df.iloc[:,0]*24
         suitable_df = suitable_df.dropna()
         suitable_df.columns = range(suitable_df.shape[1])
@@ -71,9 +71,8 @@ def plot_data_per_id(df_per_id,expected_weight_df):
         df_per_id[i].plot(kind='scatter',x='Hours_From_First_Sample',y='Weight',color='red',
                 yticks=np.arange(0, 6000, 200),ylim = (0,6000), title="Plot For Subject No: "+
                                                                 str(df_per_id[i]['ID'].real[0]),ax=ax)
-        plt.show()
-        # directory = ROOT_DIR + "\\Plots\\"
-        # plt.savefig(directory+'plt-result-' + str(df_per_id[i]['ID'].real[0]) + '.png')
+        directory = ROOT_DIR + "\\Plots\\"
+        plt.savefig(directory+'plt-result-' + str(df_per_id[i]['ID'].real[0]) + '.png')
         plt.clf()
     return
 
@@ -88,9 +87,9 @@ def collect_weight_per_date_of_birth(df):
     return df.iloc[0][1::]
 
 def filter_suitable_expected_weight(df_per_id,weight_at_birth_series,expected_weight_df):
-    weight_at_birth_in_grams = df_per_id.iloc[0]["Weight"] * 1000
+    weight_at_birth_in_grams = df_per_id.iloc[0]["Weight"]
     idx = weight_at_birth_series.searchsorted(weight_at_birth_in_grams, side='left')
-    return idx
+    return idx[0]
 
 
 logging.basicConfig(filename="GrowthCurves.log", level=logging.INFO)
@@ -100,5 +99,3 @@ weight_at_birth_series = collect_weight_per_date_of_birth(expected_weight_df)
 df_per_id = extract_dataframe_per_id(cleaned_df)
 df_per_id = add_delta_from_start_in_hours(df_per_id)
 plot_data_per_id(df_per_id,expected_weight_df)
-
-print("sasi")
