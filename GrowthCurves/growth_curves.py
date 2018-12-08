@@ -1,10 +1,12 @@
 import logging
+from builtins import len
+
 from defenitions import ROOT_DIR
 from Utils.dataset_utils import get_dataset
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+from GrowthCurves.function_fitting import polyniomial_fitting
 
 def extract_clean_wieght_data():
     '''
@@ -61,20 +63,26 @@ def plot_data_per_id(df_per_id,expected_weight_df):
     the described column above added to it
     '''
     for i in range(len(df_per_id)):
-        idx = filter_suitable_expected_weight(df_per_id[i], weight_at_birth_series, expected_weight_df)
-        suitable_df = expected_weight_df.iloc[:,[0,idx]]
-        suitable_df.iloc[:,0] = suitable_df.iloc[:,0]*24
-        suitable_df = suitable_df.dropna()
-        suitable_df.columns = range(suitable_df.shape[1])
-        suitable_df.rename(columns={0:'Hours_From_First_Sample',1:'ExpectedWeight'},inplace=True)
-        ax = suitable_df.plot(kind='line',x='Hours_From_First_Sample',y='ExpectedWeight',color='blue')
-        df_per_id[i].plot(kind='scatter',x='Hours_From_First_Sample',y='Weight',color='red',
-                yticks=np.arange(0, 6000, 200),ylim = (0,6000), title="Plot For Subject No: "+
-                                                                str(df_per_id[i]['ID'].real[0]),ax=ax)
+        normalized_expected_weight_df = normalize_expected_weight_df(df_per_id, expected_weight_df, i)
+        (x1,y1) = polyniomial_fitting(normalized_expected_weight_df,'Hours_From_First_Sample','ExpectedWeight',8)
+        # (x2,y2) = polyniomial_fitting(df_per_id[i],'Hours_From_First_Sample','Weight',8)
+        plt.plot(x1,y1,label='Expected Weight',color='r')
+        plt.scatter(df_per_id[i]['Hours_From_First_Sample'],df_per_id[i]['Weight'],label='Weight',color='b',s=2**2)
         directory = ROOT_DIR + "\\Plots\\"
         plt.savefig(directory+'plt-result-' + str(df_per_id[i]['ID'].real[0]) + '.png')
         plt.clf()
     return
+
+
+def normalize_expected_weight_df(df_per_id, expected_weight_df, i):
+    idx = filter_suitable_expected_weight(df_per_id[i], weight_at_birth_series)
+    suitable_df = expected_weight_df.iloc[:, [0, idx]]
+    suitable_df.iloc[:, 0] = suitable_df.iloc[:, 0] * 24
+    suitable_df = suitable_df.dropna()
+    suitable_df.columns = range(suitable_df.shape[1])
+    suitable_df.rename(columns={0: 'Hours_From_First_Sample', 1: 'ExpectedWeight'}, inplace=True)
+    return suitable_df
+
 
 def collect_expected_weight():
     # collect the dataset and remove the headers from it.
@@ -86,10 +94,12 @@ def collect_weight_per_date_of_birth(df):
     # Remove the column for Days old e.g. the zero redundent value
     return df.iloc[0][1::]
 
-def filter_suitable_expected_weight(df_per_id,weight_at_birth_series,expected_weight_df):
+def filter_suitable_expected_weight(df_per_id,weight_at_birth_series):
     weight_at_birth_in_grams = df_per_id.iloc[0]["Weight"]
     idx = weight_at_birth_series.searchsorted(weight_at_birth_in_grams, side='left')
-    return idx[0]
+    if idx[0] == len(weight_at_birth_series):
+        return idx[0]
+    return idx[0]+1
 
 
 logging.basicConfig(filename="GrowthCurves.log", level=logging.INFO)
