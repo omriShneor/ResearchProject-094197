@@ -1,4 +1,4 @@
-from Utils.dataset_utils import trigger_threshold,compute_condensed_distance_matrix
+from Utils.dataset_utils import trigger_threshold,compute_condensed_distance_matrix,normalize_timeseries_values
 from GrowthCurves.growth_curves import extract_clean_wieght_data,extract_dataframe_per_id,add_delta_from_start_in_hours
 from scipy.cluster.hierarchy import dendrogram, linkage
 from defenitions import ROOT_DIR
@@ -29,8 +29,8 @@ df_per_id = trigger_threshold(df_per_id, 1500)
 df_per_id = add_delta_from_start_in_hours(df_per_id)
 timeseries_dict = create_dictionary_of_time_series(df_per_id)
 timeseries_list = list(timeseries_dict.values())
-timeseries_list = [series.Weight for series in timeseries_list]
+timeseries_list = [normalize_timeseries_values(series) for series in timeseries_list]
 timeseries_keys = list(timeseries_dict.keys())
 np_array_timeseries = np.array(timeseries_list)
 distance_array = compute_condensed_distance_matrix(np_array_timeseries[:100])
-clustering_based_distances(distance_array,timeseries_keys[:100],'weighted')
+clustering_based_distances(distance_array,timeseries_keys[:100],'average')

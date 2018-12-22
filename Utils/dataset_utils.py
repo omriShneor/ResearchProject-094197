@@ -29,6 +29,7 @@ def compute_condensed_distance_matrix(np_array_timeseries):
     distances = np.array(distances)
     return distances
 
+
 def trigger_threshold(df_per_id,threshold):
     df_per_id = [df for df in df_per_id if df['Weight'].values[0] < threshold]
     return df_per_id

@@ -64,7 +64,7 @@ def plot_data_per_id(df_per_id,expected_weight_df):
     the described column above added to it
     '''
     for i in range(len(df_per_id)):
-        normalized_expected_weight_df = normalize_expected_weight_df(df_per_id, expected_weight_df, i)
+        normalized_expected_weight_df = clean_expected_weight_df(df_per_id, expected_weight_df, i)
         (x1,y1) = polyniomial_fitting(normalized_expected_weight_df,'Hours_From_First_Sample','ExpectedWeight',8)
         # (x2,y2) = polyniomial_fitting(df_per_id[i],'Hours_From_First_Sample','Weight',8)
         plt.plot(x1,y1,label='Expected Weight',color='r')
@@ -75,7 +75,7 @@ def plot_data_per_id(df_per_id,expected_weight_df):
     return
 
 
-def normalize_expected_weight_df(df_per_id, expected_weight_df, i):
+def clean_expected_weight_df(df_per_id, expected_weight_df, i):
     idx = filter_suitable_expected_weight(df_per_id[i], weight_at_birth_series)
     suitable_df = expected_weight_df.iloc[:, [0, idx]]
     suitable_df.iloc[:, 0] = suitable_df.iloc[:, 0] * 24
