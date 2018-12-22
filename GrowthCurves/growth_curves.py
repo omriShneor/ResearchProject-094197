@@ -1,14 +1,12 @@
 import logging
 from builtins import len
-from dtw import dtw
 from defenitions import ROOT_DIR
-from Utils.dataset_utils import get_dataset,costum_euclide_norm,normalize_timeseries_values
+from Utils.dataset_utils import get_dataset,trigger_threshold
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from GrowthCurves.function_fitting import polyniomial_fitting
-from scipy.spatial.distance import pdist
-import scipy.cluster.hierarchy as hac
+
 
 def extract_clean_wieght_data():
     '''
@@ -108,23 +106,7 @@ def plot_data_per_id_with_normalized_time_from_birth(df_per_id,expected_weight_d
     df_per_id = add_delta_from_start_in_hours(df_per_id)
     plot_data_per_id(df_per_id,expected_weight_df)
 
-def create_dictionary_of_time_series(df_per_id):
-    timeseries_dict = {}
-    for df in df_per_id:
-        ts = df.set_index('Date')
-        id = ts['ID'].values[0]
-        ts = ts.drop(columns = 'ID')
-        timeseries_dict[id] = ts
-    return timeseries_dict
 
-def trigger_threshold(df_per_id,threshold):
-    df_per_id = [df for df in df_per_id if df['Weight'].values[0] < threshold]
-    return df_per_id
-
-def create_condensed_distance_matrix(timeseries_dict):
-    X = np.asarray([timeseries_dict.values()])
-    dist_matrix = pdist(X,costum_euclide_norm)
-    return dist_matrix
 
 # Data Preprocessing phase!
 logging.basicConfig(filename="GrowthCurves.log", level=logging.INFO)
@@ -132,32 +114,8 @@ cleaned_df = extract_clean_wieght_data()
 expected_weight_df = collect_expected_weight()
 weight_at_birth_series = collect_weight_per_date_of_birth(expected_weight_df)
 df_per_id = extract_dataframe_per_id(cleaned_df)
-
-# TODO: This is currently hard coded, need to move the threshold to config file and read it from that file
 df_per_id = trigger_threshold(df_per_id, 1500)
-timeseries_dict = create_dictionary_of_time_series(df_per_id)
-# df_per_id = add_delta_from_start_in_hours(df_per_id)
+df_per_id = add_delta_from_start_in_hours(df_per_id)
 
-# Some hard lifting logics: Plotting and clustering
-# plot_data_per_id_with_normalized_time_from_birth(df_per_id,expected_weight_df)
-for ts in timeseries_dict.values():
-    ts['Weight'] = normalize_timeseries_values(ts)
-distance_matrix = create_condensed_distance_matrix(timeseries_dict)
-
-# timeSeries = pd.concat(timeseries_dict)
-# Z = hac.linkage(timeSeries, method='single', metric=costum_euclide_norm)
-# # for ts in timeseries_list:
-# #     ts['Weight'] = normalize_timeseries_values(ts)
-# #     timeSeries = timeSeries.append(ts)
-# plt.figure(figsize=(25, 10))
-# plt.title('Hierarchical Clustering Dendrogram')
-# plt.xlabel('sample index')
-# plt.ylabel('distance')
-# hac.dendrogram(
-#     Z,
-#     leaf_rotation=90,  # rotates the x axis labels
-#     leaf_font_size=8,  # font size for the x axis labels
-# )
-# plt.show()
-
-print("Sasi")
+#Plotting the data!
+plot_data_per_id(df_per_id,expected_weight_df)
