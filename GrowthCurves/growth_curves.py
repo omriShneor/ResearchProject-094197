@@ -64,7 +64,7 @@ def plot_data_per_id(df_per_id,expected_weight_df):
     the described column above added to it
     '''
     for i in range(len(df_per_id)):
-        normalized_expected_weight_df = clean_expected_weight_df(df_per_id, expected_weight_df, i)
+        normalized_expected_weight_df = clean_expected_weight_df(df_per_id[i], expected_weight_df)
         (x1,y1) = polyniomial_fitting(normalized_expected_weight_df,'Hours_From_First_Sample','ExpectedWeight',8)
         # (x2,y2) = polyniomial_fitting(df_per_id[i],'Hours_From_First_Sample','Weight',8)
         plt.plot(x1,y1,label='Expected Weight',color='r')
@@ -75,8 +75,16 @@ def plot_data_per_id(df_per_id,expected_weight_df):
     return
 
 
-def clean_expected_weight_df(df_per_id, expected_weight_df, i):
-    idx = filter_suitable_expected_weight(df_per_id[i], weight_at_birth_series)
+def clean_expected_weight_df(df, expected_weight_df):
+    '''
+    cleaning the expected weight dataframe. the result is a dataframe with 2 columns: Hours_From_First_Sample,
+    ExpectedWeight.
+    :param df: a dataframe representing the weight overtime of a single subject.
+    :param expected_weight_df: a dataframe that holds the data regarding the expected weight values over time
+    for all the subjects.
+    :return suitable_df: the suitable expected dataframe weight over time for the df input parameter.
+    '''
+    idx = filter_suitable_expected_weight(df, weight_at_birth_series)
     suitable_df = expected_weight_df.iloc[:, [0, idx]]
     suitable_df.iloc[:, 0] = suitable_df.iloc[:, 0] * 24
     suitable_df = suitable_df.dropna()
@@ -86,16 +94,31 @@ def clean_expected_weight_df(df_per_id, expected_weight_df, i):
 
 
 def collect_expected_weight():
+    '''
+    collecting the expected weight dataframe from an excel file called: "ExpectedWeight.xlsx" which
+    needs to be in the path ROOT_DIR\DataSet\ExpectedWeight.xlsx
+    :return df: the dataframe
+    '''
     # collect the dataset and remove the headers from it.
     datasets_dir = ROOT_DIR + '\\DataSet'
     df = pd.read_excel(datasets_dir + '\\' + "ExpectedWeight.xlsx", header=None,skiprows=1)
     return df
 
 def collect_weight_per_date_of_birth(df):
-    # Remove the column for Days old e.g. the zero redundent value
+    '''
+    Remove the column for Days old e.g. the zero redundent value
+    :return df: the dataframe
+    '''
     return df.iloc[0][1::]
 
 def filter_suitable_expected_weight(df_per_id,weight_at_birth_series):
+    '''
+    use binary search for getting the suitable expected weight column of the dataframe of weights sent as input.
+    :param df_per_id: the df per id we want to find the suitable expected weight for.
+    :param weight_at_birth_series: a series of values of weight at birth, from which we extract the idx of
+    the expected weight column index.
+    :return df: the idx in the expected weight data frames of the suitable column for the given df as input.
+    '''
     weight_at_birth_in_grams = df_per_id.iloc[0]["Weight"]
     idx = weight_at_birth_series.searchsorted(weight_at_birth_in_grams, side='left')
     if idx[0] == len(weight_at_birth_series):
@@ -103,9 +126,13 @@ def filter_suitable_expected_weight(df_per_id,weight_at_birth_series):
     return idx[0]+1
 
 def plot_data_per_id_with_normalized_time_from_birth(df_per_id,expected_weight_df):
+    '''
+    add delta from start column to the df per id and plot the data per id.
+    :param df_per_id: the df we want to add normalized plot and plot.
+    :param expected_weight_df: the expected weight we want to plot.
+    '''
     df_per_id = add_delta_from_start_in_hours(df_per_id)
     plot_data_per_id(df_per_id,expected_weight_df)
-
 
 
 # Data Preprocessing phase!
@@ -117,5 +144,5 @@ df_per_id = extract_dataframe_per_id(cleaned_df)
 df_per_id = trigger_threshold(df_per_id, 1500)
 df_per_id = add_delta_from_start_in_hours(df_per_id)
 
-#Plotting the data!
+# Plotting the data!
 plot_data_per_id(df_per_id,expected_weight_df)
