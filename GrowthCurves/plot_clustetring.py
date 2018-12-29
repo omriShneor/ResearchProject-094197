@@ -130,4 +130,4 @@ json_file = directory+ "d3-dendrogram-" + METHOD + ".json"
 depth = 4
 with open(json_file) as handle:
     json_dict = json.loads(handle.read())
-    json_to_weight_plots(json_dict,depth,ROOT_DIR + "\\ClusterFigures\\"+ METHOD + "-" + "Root")
+    json_to_weight_plots(json_dict,depth,ROOT_DIR + "\\ClusterFigures\\"+ METHOD + "\\" + "Root")
