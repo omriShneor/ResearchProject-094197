@@ -1,7 +1,8 @@
 from Utils.dataset_utils import trigger_threshold,compute_condensed_distance_matrix,normalize_timeseries_values
-from GrowthCurves.growth_curves import extract_clean_wieght_data,extract_dataframe_per_id,add_delta_from_start_in_hours
+from GrowthCurves.growth_curves import extract_clean_wieght_data,extract_dataframe_per_id,\
+    add_delta_from_start_in_hours,hash_df_ids
 from scipy.cluster.hierarchy import dendrogram, linkage,to_tree,cut_tree,leaves_list
-from defenitions import ROOT_DIR,TIME_SERIES_ARRAY_SIZE,METHOD
+from defenitions import ROOT_DIR,TIME_SERIES_ARRAY_SIZE,METHOD,DEPTH
 from functools import reduce
 from matplotlib import pyplot as plt
 from shutil import copy
@@ -22,7 +23,7 @@ def create_dictionary_of_time_series(df_per_id):
     for df in df_per_id:
         ts = df.set_index('Hours_From_First_Sample')
         id = ts['ID'].values[0]
-        ts = ts.drop(columns = ['ID','Date'])
+        ts = ts.drop(columns = ['ID'])
         timeseries_dict[id] = ts
     return timeseries_dict
 
@@ -87,30 +88,50 @@ def clustering_based_distances(distance_array,timeseries_keys,method='single'):
     fig = plt.figure(figsize=(25, 10))
     dn = dendrogram(Z,labels=timeseries_keys)
     directory = ROOT_DIR + "\\ClusterFigures\\"
-    # plt.savefig(directory+'Hierarchical-clustering-' + method)
-    # plt.clf()
+    plt.savefig(directory+'Hierarchical-clustering-' + method)
+    plt.clf()
     T = to_tree(Z,rd=False)
     return Z,T,dn
 
 def json_to_weight_plots(json_dict,depth,dirpath):
-    if(depth == 0):
-        if json_dict['name']=='Root1':
-            return
-        else:
-            ids = json_dict['name'].split('-')
-            for id in ids:
-                if not exists(dirpath):
-                    mkdir(dirpath)
-                copy(ROOT_DIR+'\\Plots\\'+'plt-result-'+str(id)+'.png',dirpath)
-            return
+    '''
+    creating a directory of plots with the plots according to the hierarchy of the cluster.
+    :param json_dict: a d3.json file representation of the cluster
+    :param depth: the depth of the levels of the cluster tree we want to traverse.
+    :param dirpath: the path to which we want to copy all the plots to.
+    :return:
+    '''
+    copy_plots_to_folder(dirpath, json_dict)
+    if(depth == 0 or len(json_dict['children']) == 0):
+        return
     for i in range(len(json_dict['children'])):
         json_to_weight_plots(json_dict['children'][i],depth-1,dirpath+ '-' +str(i))
+
+
+def copy_plots_to_folder(dirpath, json_dict):
+    '''
+    copying plots from the json_dict['name'] ids to the dirpath.
+    :param dirpath: the dirpath we want to copy to.
+    :param json_dict: json dictionary with a key 'name' holding the ids of the plots.
+    :return:
+    '''
+    if json_dict['name'] == 'Root1':
+        return
+    ids = json_dict['name'].split('-')
+    for id in ids:
+        if not exists(dirpath):
+            mkdir(dirpath)
+        copy(ROOT_DIR + '\\Plots\\' + 'plt-result-' + str(id) + '.png', dirpath)
+    return
+
 
 # Data Preprocessing phase!
 cleaned_df = extract_clean_wieght_data()
 df_per_id = extract_dataframe_per_id(cleaned_df)
-df_per_id = trigger_threshold(df_per_id, 1500)
 df_per_id = add_delta_from_start_in_hours(df_per_id)
+df_per_id = trigger_threshold(df_per_id, 1500)
+df_per_id = hash_df_ids(df_per_id)
+df_per_id = [df.drop(columns = ['Date']) for df in df_per_id]
 timeseries_dict = create_dictionary_of_time_series(df_per_id)
 timeseries_list = list(timeseries_dict.values())
 timeseries_list = [normalize_timeseries_values(series) for series in timeseries_list]
@@ -124,10 +145,11 @@ distance_array = compute_condensed_distance_matrix(np_array_timeseries[:TIME_SER
 Z,T,dn = clustering_based_distances(distance_array, timeseries_keys[:TIME_SERIES_ARRAY_SIZE], METHOD)
 d3_dendro = hierarchical_cluster_to_d3_dendro(T, dn,METHOD)
 
-#Convert json cluster representation to dictionary
+# Convert json cluster representation to dictionary
 directory = ROOT_DIR + "\\ClusterFigures\\"
 json_file = directory+ "d3-dendrogram-" + METHOD + ".json"
-depth = 4
+
+# Create plot directories to every cluster according to json dictionary of the cluster.
 with open(json_file) as handle:
     json_dict = json.loads(handle.read())
-    json_to_weight_plots(json_dict,depth,ROOT_DIR + "\\ClusterFigures\\"+ METHOD + "\\" + "Root")
+    json_to_weight_plots(json_dict,DEPTH,ROOT_DIR + "\\ClusterFigures\\" + METHOD + "\\" + "Root")

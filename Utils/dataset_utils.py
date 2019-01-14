@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
+from sys import maxsize
+from scipy import stats
 
 
 def get_dataset(dataset_filename):
@@ -61,4 +63,18 @@ def trigger_threshold(df_per_id,threshold):
     :return: a list of dataframes with only subjects who were born with weight under the threshold.
     '''
     df_per_id = [df for df in df_per_id if df['Weight'].values[0] < threshold]
+    df_per_id = [df[~(np.abs(df.Weight-df.Weight.mean()) > (3*df.Weight.std()))] for df in df_per_id]
+    df_per_id = [df[~(np.abs(df.Hours_From_First_Sample - df.Hours_From_First_Sample.mean()) >
+                      (3 * df.Hours_From_First_Sample.std()))] for df in df_per_id]
+    return df_per_id
+
+
+def hash_df_ids(df_per_id):
+    '''
+    hashing the column ID in every data frame.
+    :param df_per_id: a list of data frames we want to hash the IDs of.
+    :return: return the updated list of data frames.
+    '''
+    for df in df_per_id:
+        df['ID'] = df['ID'].apply(lambda x: hash(x)+maxsize+1)
     return df_per_id

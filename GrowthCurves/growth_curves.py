@@ -1,7 +1,7 @@
 import logging
 from builtins import len
 from defenitions import ROOT_DIR
-from Utils.dataset_utils import get_dataset,trigger_threshold
+from Utils.dataset_utils import get_dataset,trigger_threshold,hash_df_ids
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -141,8 +141,10 @@ cleaned_df = extract_clean_wieght_data()
 expected_weight_df = collect_expected_weight()
 weight_at_birth_series = collect_weight_per_date_of_birth(expected_weight_df)
 df_per_id = extract_dataframe_per_id(cleaned_df)
-df_per_id = trigger_threshold(df_per_id, 1500)
 df_per_id = add_delta_from_start_in_hours(df_per_id)
+df_per_id = [df.drop(columns = ['Date']) for df in df_per_id]
+df_per_id = trigger_threshold(df_per_id, 1500)
+df_per_id = hash_df_ids(df_per_id)
 
 # Plotting the data!
 plot_data_per_id(df_per_id,expected_weight_df)
