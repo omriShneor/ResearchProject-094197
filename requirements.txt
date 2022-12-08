@@ -1,6 +1,6 @@
 backcall==0.1.0
 bleach==3.0.2
-certifi==2018.1.18
+certifi==2022.12.7
 cffi==1.11.5
 chardet==3.0.4
 cmake-converter==1.1.0
